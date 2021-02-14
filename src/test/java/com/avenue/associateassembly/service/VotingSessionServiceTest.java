@@ -29,6 +29,7 @@ import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.BusinessException;
 import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.VotingSessionBlockedReadingResultsException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
 
@@ -183,5 +184,19 @@ public class VotingSessionServiceTest {
 
         assertEquals(2, resp.getVoteCount().getNo());
         assertEquals(1, resp.getVoteCount().getYes());
+    }
+	
+	@Test(expected = VotingSessionBlockedReadingResultsException.class)
+    public void shouldNotReturnResultWhenVotingSessionIsOpen(){
+        ObjectId id = new ObjectId();
+        Agenda agenda = new Agenda("Agenda test - Should not return result when voting session is open");
+        agenda.setId(id);
+
+        VotingSession voting = new VotingSession(agenda, 10);
+        voting.addVote(new Vote("1", Answer.NO));
+
+        Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(voting));
+
+        votingSessionService.getVotingSessionResult(id.toHexString());
     }
 }

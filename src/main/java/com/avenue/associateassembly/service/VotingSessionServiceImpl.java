@@ -23,6 +23,7 @@ import com.avenue.associateassembly.entity.VoteCount;
 import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.CPFAlreadyVotedException;
 import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.VotingSessionBlockedReadingResultsException;
 import com.avenue.associateassembly.exception.VotingSessionExpiredException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
@@ -51,15 +52,23 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	public VotingSessionResponseDto create(VotingSessionRequestDto dto) {
 		Agenda agenda = this.agendaRepository.findById(new ObjectId(dto.getAgendaId()))
 				.orElseThrow(() -> new NotFoundException("Agenda not found."));
-
-		if (dto.getMinutesToExpiration() == null) {
-			dto.setMinutesToExpiration(getDefaultExpirationMinutes());
-		}
+		
+		dto.setMinutesToExpiration(getMinutesToExpiration(dto));
 
 		VotingSession votingSession = new VotingSession(agenda, dto.getMinutesToExpiration());
 		votingSession = this.votingSessionRepository.insert(votingSession);
 
 		return modelMapper.map(votingSession, VotingSessionResponseDto.class);
+	}
+	
+	private Integer getMinutesToExpiration(VotingSessionRequestDto dto) {
+		Integer minutesToExpiration = dto.getMinutesToExpiration();
+
+		if (minutesToExpiration == null || minutesToExpiration <= 0) {
+			return getDefaultExpirationMinutes();
+		}
+		
+		return minutesToExpiration;
 	}
 
 	private int getDefaultExpirationMinutes() {
@@ -110,6 +119,10 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	public VotingSessionResultResponseDto getVotingSessionResult(String votingSessionId) {
 		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
 				.orElseThrow(() -> new NotFoundException("Voting session not found."));
+
+		if (!votingSession.isExpired()) {
+            throw new VotingSessionBlockedReadingResultsException(votingSession.getExpirationDate());
+		}
 		
 		List<Vote> votes = votingSession.getVotes();
 		
