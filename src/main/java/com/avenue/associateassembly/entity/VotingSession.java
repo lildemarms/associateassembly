@@ -88,6 +88,14 @@ public class VotingSession {
 		this.closed = closed;
 	}
 
+	public boolean isExpired() {
+		return this.getExpirationDate().isBefore(Instant.now());
+	}
+
+	public boolean cpfAlreadyVoted(String cpf) {
+		return this.votes.stream().anyMatch(vote -> vote.getCpf().equals(cpf));
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
