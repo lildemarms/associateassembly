@@ -25,10 +25,10 @@ import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.entity.Answer;
 import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
+import com.avenue.associateassembly.exception.BusinessException;
 import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
-
 
 @RunWith(MockitoJUnitRunner.class)
 public class VotingSessionServiceTest {
@@ -120,4 +120,46 @@ public class VotingSessionServiceTest {
 		assertTrue(voteResponse.isSuccess());
 	}
 
+	@Test
+	public void shouldReturnZeroVotings() {
+		List<VotingSessionResponseDto> resp = votingSessionService.findAll();
+		assertEquals(0, resp.size());
+	}
+
+	@Test
+	public void shouldReturnOneVoting() {
+		ObjectId id = new ObjectId();
+		VotingSession votingSession = new VotingSession();
+		votingSession.setId(id);
+
+		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
+
+		VotingSessionResponseDto resp = votingSessionService.findById(id.toHexString());
+		assertEquals(id.toHexString(), resp.getId());
+	}
+
+	@Test(expected = NotFoundException.class)
+	public void shouldThrowNotFoundException() {
+		ObjectId id = new ObjectId();
+		Mockito.when(votingSessionRepository.findById(id)).thenThrow(new NotFoundException("Voting not found."));
+
+		votingSessionService.findById(id.toHexString());
+	}
+
+	@Test(expected = BusinessException.class)
+	public void shouldThrowVotingExpired() {
+		ObjectId id = new ObjectId();
+		Agenda agenda = new Agenda("Agenda test - Should throw voting expired");
+		VotingSession votingSession = new VotingSession(agenda, 1);
+
+		votingSession.setId(id);
+		votingSession.setExpirationDate(votingSession.getExpirationDate().minusSeconds(61));
+
+		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
+
+		VoteRequestDto dto = new VoteRequestDto();
+		dto.setCpf("78773864005");
+		dto.setAnswer(Answer.NO);
+		votingSessionService.addVote(votingSession.getId().toHexString(), dto);
+	}
 }

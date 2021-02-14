@@ -17,7 +17,9 @@ import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
+import com.avenue.associateassembly.exception.CPFAlreadyVotedException;
 import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.VotingSessionExpiredException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
 
@@ -81,16 +83,23 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
 				.orElseThrow(() -> new NotFoundException("Voting session not found."));
 
-		// TODO: validar se votação já expirou
-		// TODO: validar se cpf já votou/pode votar
+		// TODO: validar se cpf pode votar
+		
+		if (votingSession.isExpired()) {
+			throw new VotingSessionExpiredException();
+		}
+		
+		if (votingSession.cpfAlreadyVoted(dto.getCpf())) {
+			throw new CPFAlreadyVotedException(dto.getCpf());
+		}
 
 		Vote vote = new Vote(dto.getCpf(), dto.getAnswer());
 		votingSession.addVote(vote);
 		votingSessionRepository.save(votingSession);
 
-		VoteResponseDto resp = new VoteResponseDto();
-		resp.setSuccess(true);
-		return resp;
+		VoteResponseDto response = new VoteResponseDto();
+		response.setSuccess(true);
+		return response;
 	}
 
 }
