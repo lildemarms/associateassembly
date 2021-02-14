@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 @RestController
-@Api(value = "agendas")
+@Api(value = "Agenda")
 @RequestMapping(value = "api/v1/agendas", produces = "application/json")
 public class AgendaController {
 
