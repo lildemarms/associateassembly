@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import com.avenue.associateassembly.dto.VoteRequestDto;
+import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
+import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
@@ -59,19 +62,35 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 
 	@Override
 	public VotingSessionResponseDto findById(String id) {
-		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(id)).
-                orElseThrow(() -> new NotFoundException("Voting not found."));
+		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(id))
+				.orElseThrow(() -> new NotFoundException("Voting not found."));
 
-        return modelMapper.map(votingSession, VotingSessionResponseDto.class);
+		return modelMapper.map(votingSession, VotingSessionResponseDto.class);
 	}
 
 	@Override
 	public List<VotingSessionResponseDto> findAll() {
 		List<VotingSession> votingSessions = this.votingSessionRepository.findAll();
 
-        return votingSessions.stream().map(
-                vs -> modelMapper.map(vs, VotingSessionResponseDto.class)
-        ).collect(Collectors.toList());
+		return votingSessions.stream().map(vs -> modelMapper.map(vs, VotingSessionResponseDto.class))
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public VoteResponseDto addVote(String votingSessionId, VoteRequestDto dto) {
+		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
+				.orElseThrow(() -> new NotFoundException("Voting session not found."));
+
+		// TODO: validar se votação já expirou
+		// TODO: validar se cpf já votou/pode votar
+
+		Vote vote = new Vote(dto.getCpf(), dto.getAnswer());
+		votingSession.addVote(vote);
+		votingSessionRepository.save(votingSession);
+
+		VoteResponseDto resp = new VoteResponseDto();
+		resp.setSuccess(true);
+		return resp;
 	}
 
 }

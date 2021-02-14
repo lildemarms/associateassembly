@@ -1,6 +1,7 @@
 package com.avenue.associateassembly.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.avenue.associateassembly.dto.VoteRequestDto;
+import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
+import com.avenue.associateassembly.entity.Answer;
+import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class VotingSessionServiceTest {
@@ -37,11 +43,11 @@ public class VotingSessionServiceTest {
 	public ModelMapper modelMapper;
 
 	@InjectMocks
-	public VotingSessionServiceImpl votingService;
+	public VotingSessionServiceImpl votingSessionService;
 
 	@Before
 	public void setup() {
-		ReflectionTestUtils.setField(votingService, "modelMapper", new ModelMapper());
+		ReflectionTestUtils.setField(votingSessionService, "modelMapper", new ModelMapper());
 	}
 
 	@Test
@@ -58,7 +64,7 @@ public class VotingSessionServiceTest {
 		VotingSessionRequestDto request = new VotingSessionRequestDto();
 		request.setAgendaId(votingSession.getId().toHexString());
 		request.setMinutesToExpiration(10);
-		VotingSessionResponseDto response = votingService.create(request);
+		VotingSessionResponseDto response = votingSessionService.create(request);
 
 		assertEquals(id.toHexString(), response.getId());
 	}
@@ -74,7 +80,7 @@ public class VotingSessionServiceTest {
 		VotingSessionRequestDto request = new VotingSessionRequestDto();
 		request.setAgendaId(votingSession.getId().toHexString());
 
-		votingService.create(request);
+		votingSessionService.create(request);
 	}
 
 	@Test
@@ -85,8 +91,33 @@ public class VotingSessionServiceTest {
 
 		Mockito.when(votingSessionRepository.findAll()).thenReturn(votingSessions);
 
-		List<VotingSessionResponseDto> resp = votingService.findAll();
+		List<VotingSessionResponseDto> resp = votingSessionService.findAll();
 		assertEquals(2, resp.size());
+	}
+
+	@Test
+	public void shouldVote() {
+		ObjectId id = new ObjectId();
+		Agenda agenda = new Agenda("Agenda test - Should vote");
+
+		VotingSession votingSession = new VotingSession(agenda, 10);
+		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
+
+		VotingSession votingSession2 = new VotingSession(agenda, 10);
+		votingSession2.setId(id);
+
+		Vote vote = new Vote("99142889014", Answer.NO);
+		votingSession2.addVote(vote);
+
+		Mockito.when(votingSessionRepository.save(votingSession)).thenReturn(votingSession2);
+
+		VoteRequestDto dto = new VoteRequestDto();
+		dto.setCpf("99142889014");
+		dto.setAnswer(Answer.NO);
+
+		VoteResponseDto voteResponse = votingSessionService.addVote(votingSession2.getId().toHexString(), dto);
+
+		assertTrue(voteResponse.isSuccess());
 	}
 
 }

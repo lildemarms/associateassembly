@@ -18,6 +18,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.avenue.associateassembly.dto.VoteRequestDto;
+import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.service.VotingSessionService;
@@ -39,7 +41,7 @@ public class VotingSessionControllerTest {
 		response.setId(new ObjectId().toHexString());
 		Mockito.when(votingSessionService.create(request)).thenReturn(response);
 
-		ResponseEntity<?> responseEntity = votingSessionController.create(request);
+		ResponseEntity<VotingSessionResponseDto> responseEntity = votingSessionController.create(request);
 
 		assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
 		assertNotNull(responseEntity.getBody());
@@ -47,10 +49,10 @@ public class VotingSessionControllerTest {
 
 	@Test
 	public void shouldReturnZeroVotings() {
-		ResponseEntity<?> resp = votingSessionController.listAll();
+		ResponseEntity<List<VotingSessionResponseDto>> resp = votingSessionController.listAll();
 
 		assertEquals(resp.getStatusCode(), HttpStatus.OK);
-		assertEquals(0, ((LinkedList<?>) resp.getBody()).size());
+		assertEquals(0, ((LinkedList<VotingSessionResponseDto>) resp.getBody()).size());
 	}
 
 	@Test
@@ -61,9 +63,22 @@ public class VotingSessionControllerTest {
 
 		Mockito.when(votingSessionService.findAll()).thenReturn(listDto);
 
-		ResponseEntity<?> resp = votingSessionController.listAll();
+		ResponseEntity<List<VotingSessionResponseDto>> responseEntity = votingSessionController.listAll();
 
-		assertEquals(resp.getStatusCode(), HttpStatus.OK);
-		assertEquals(1, ((ArrayList<?>) resp.getBody()).size());
+		assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+		assertEquals(1, ((ArrayList<VotingSessionResponseDto>) responseEntity.getBody()).size());
+	}
+
+	@Test
+	public void shouldVote() throws URISyntaxException {
+		String votingSessionId = "602935bd572b6d0fe3e6c12e";
+		VoteRequestDto request = new VoteRequestDto();
+		VoteResponseDto response = new VoteResponseDto(true);
+
+		Mockito.when(votingSessionService.addVote(votingSessionId, request)).thenReturn(response);
+
+		ResponseEntity<VoteResponseDto> responseEntity = votingSessionController.vote(votingSessionId, request);
+		assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
+		assertNotNull(responseEntity.getBody());
 	}
 }

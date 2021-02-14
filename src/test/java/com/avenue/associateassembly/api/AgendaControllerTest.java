@@ -52,17 +52,17 @@ public class AgendaControllerTest {
 
         Mockito.when(agendaService.findAll()).thenReturn(listDto);
 
-        ResponseEntity<?> resp = agendaController.listAll();
+        ResponseEntity<List<AgendaResponseDto>> responseEntity = agendaController.listAll();
 
-        assertEquals(resp.getStatusCode(), HttpStatus.OK);
-        assertEquals(2, ((ArrayList<?>) resp.getBody()).size());
+        assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        assertEquals(2, ((ArrayList<AgendaResponseDto>) responseEntity.getBody()).size());
     }
     
     @Test
     public void shouldReturnZeroAgendas() {
-        ResponseEntity<List<AgendaResponseDto>> resp = agendaController.listAll();
+        ResponseEntity<List<AgendaResponseDto>> responseEntity = agendaController.listAll();
 
-        assertEquals(resp.getStatusCode(), HttpStatus.OK);
-        assertEquals(0, ((LinkedList<?>) resp.getBody()).size());
+        assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        assertEquals(0, ((LinkedList<AgendaResponseDto>) responseEntity.getBody()).size());
     }
 }

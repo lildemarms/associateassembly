@@ -93,7 +93,8 @@ public class VotingSession {
 	}
 
 	public boolean cpfAlreadyVoted(String cpf) {
-		return this.votes.stream().anyMatch(vote -> vote.getCpf().equals(cpf));
+		return this.votes.stream()
+				.anyMatch(vote -> vote.getCpf().equals(cpf));
 	}
 
 	@Override
