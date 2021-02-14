@@ -1,6 +1,8 @@
 package com.avenue.associateassembly.service;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
@@ -53,6 +55,23 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 
 	private int getDefaultExpirationMinutes() {
 		return Integer.parseInt(Objects.requireNonNull(environment.getProperty(DEFAULT_EXPIRATION_MINUTES)));
+	}
+
+	@Override
+	public VotingSessionResponseDto findById(String id) {
+		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(id)).
+                orElseThrow(() -> new NotFoundException("Voting not found."));
+
+        return modelMapper.map(votingSession, VotingSessionResponseDto.class);
+	}
+
+	@Override
+	public List<VotingSessionResponseDto> findAll() {
+		List<VotingSession> votingSessions = this.votingSessionRepository.findAll();
+
+        return votingSessions.stream().map(
+                vs -> modelMapper.map(vs, VotingSessionResponseDto.class)
+        ).collect(Collectors.toList());
 	}
 
 }

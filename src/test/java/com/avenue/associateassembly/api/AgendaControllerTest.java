@@ -52,7 +52,7 @@ public class AgendaControllerTest {
 
         Mockito.when(agendaService.findAll()).thenReturn(listDto);
 
-        ResponseEntity<?> resp = agendaController.findAll();
+        ResponseEntity<?> resp = agendaController.listAll();
 
         assertEquals(resp.getStatusCode(), HttpStatus.OK);
         assertEquals(2, ((ArrayList<?>) resp.getBody()).size());
@@ -60,7 +60,7 @@ public class AgendaControllerTest {
     
     @Test
     public void shouldReturnZeroAgendas() {
-        ResponseEntity<List<AgendaResponseDto>> resp = agendaController.findAll();
+        ResponseEntity<List<AgendaResponseDto>> resp = agendaController.listAll();
 
         assertEquals(resp.getStatusCode(), HttpStatus.OK);
         assertEquals(0, ((LinkedList<?>) resp.getBody()).size());

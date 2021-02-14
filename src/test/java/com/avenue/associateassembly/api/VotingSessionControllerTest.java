@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -23,22 +26,44 @@ import com.avenue.associateassembly.service.VotingSessionService;
 public class VotingSessionControllerTest {
 
 	@Mock
-    public VotingSessionService votingSessionService;
+	public VotingSessionService votingSessionService;
 
-    @InjectMocks
-    public VotingSessionController votingSessionController;
-	
+	@InjectMocks
+	public VotingSessionController votingSessionController;
+
 	@Test
-    public void shouldCreateVoting() throws URISyntaxException {
-        VotingSessionRequestDto request = new VotingSessionRequestDto();
-        VotingSessionResponseDto response = new VotingSessionResponseDto();
+	public void shouldCreateVoting() throws URISyntaxException {
+		VotingSessionRequestDto request = new VotingSessionRequestDto();
+		VotingSessionResponseDto response = new VotingSessionResponseDto();
 
-        response.setId(new ObjectId().toHexString());
-        Mockito.when(votingSessionService.create(request)).thenReturn(response);
+		response.setId(new ObjectId().toHexString());
+		Mockito.when(votingSessionService.create(request)).thenReturn(response);
 
-        ResponseEntity<?> responseEntity = votingSessionController.create(request);
+		ResponseEntity<?> responseEntity = votingSessionController.create(request);
 
-        assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
-        assertNotNull(responseEntity.getBody());
-    }
+		assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
+		assertNotNull(responseEntity.getBody());
+	}
+
+	@Test
+	public void shouldReturnZeroVotings() {
+		ResponseEntity<?> resp = votingSessionController.listAll();
+
+		assertEquals(resp.getStatusCode(), HttpStatus.OK);
+		assertEquals(0, ((LinkedList<?>) resp.getBody()).size());
+	}
+
+	@Test
+	public void shouldReturnVotings() {
+		List<VotingSessionResponseDto> listDto = new ArrayList<>();
+		VotingSessionResponseDto voting = new VotingSessionResponseDto();
+		listDto.add(voting);
+
+		Mockito.when(votingSessionService.findAll()).thenReturn(listDto);
+
+		ResponseEntity<?> resp = votingSessionController.listAll();
+
+		assertEquals(resp.getStatusCode(), HttpStatus.OK);
+		assertEquals(1, ((ArrayList<?>) resp.getBody()).size());
+	}
 }

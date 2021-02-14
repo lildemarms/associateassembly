@@ -49,13 +49,13 @@ public class AgendaController {
     
     @ApiOperation(value="Get one agenda by id", response = AgendaResponseDto.class)
     @GetMapping("/{id}")
-    public ResponseEntity<AgendaResponseDto> getById(@PathVariable String id){
+    public ResponseEntity<AgendaResponseDto> findById(@PathVariable String id){
         return ResponseEntity.ok(this.agendaService.findById(id));
     }
     
     @ApiOperation(value="List all agendas", response = AgendaResponseDto.class)
     @GetMapping()
-    public ResponseEntity<List<AgendaResponseDto>> findAll(){
+    public ResponseEntity<List<AgendaResponseDto>> listAll(){
         return ResponseEntity.ok(this.agendaService.findAll());
     }
 }
