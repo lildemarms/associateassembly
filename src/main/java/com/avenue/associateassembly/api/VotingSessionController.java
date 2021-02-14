@@ -68,4 +68,13 @@ public class VotingSessionController {
         VoteResponseDto response = this.votingSessionService.addVote(votingSessionId, vote);
         return ResponseEntity.created(new URI(response.toString())).body(response);
     }
+	
+	@ApiOperation(value="Get the voting session result", response = VotingSessionResponseDto.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Voting session result found.")
+    })
+    @GetMapping("/{votingSessionId}/result")
+    public ResponseEntity<?> getVotingResult(@PathVariable String votingSessionId){
+        return ResponseEntity.ok(this.votingSessionService.getVotingSessionResult(votingSessionId));
+    }
 }

@@ -3,6 +3,7 @@ package com.avenue.associateassembly.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import com.avenue.associateassembly.dto.VoteRequestDto;
 import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
+import com.avenue.associateassembly.dto.VotingSessionResultResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.entity.Answer;
 import com.avenue.associateassembly.entity.Vote;
@@ -51,9 +53,9 @@ public class VotingSessionServiceTest {
 	}
 
 	@Test
-	public void shouldCreateVoting() {
+	public void shouldCreateVotingSession() {
 		ObjectId id = new ObjectId();
-		Agenda agenda = new Agenda("Agenda test - Should create voting");
+		Agenda agenda = new Agenda("Agenda test - Should create voting session");
 
 		VotingSession votingSession = new VotingSession(agenda, 10);
 		votingSession.setId(id);
@@ -70,9 +72,9 @@ public class VotingSessionServiceTest {
 	}
 
 	@Test(expected = NotFoundException.class)
-	public void shouldNotCreateVotingWhenAgendaNotExists() {
+	public void shouldNotCreateVotingSessionWhenAgendaNotExists() {
 		ObjectId id = new ObjectId();
-		Agenda agenda = new Agenda("Agenda test - Should not create voting when agenda not exists");
+		Agenda agenda = new Agenda("Agenda test - Should not create voting session when agenda not exists");
 
 		VotingSession votingSession = new VotingSession(agenda, 10);
 		votingSession.setId(id);
@@ -84,7 +86,7 @@ public class VotingSessionServiceTest {
 	}
 
 	@Test
-	public void shouldReturnVotings() {
+	public void shouldReturnVotingSessions() {
 		List<VotingSession> votingSessions = new ArrayList<>();
 		votingSessions.add(new VotingSession());
 		votingSessions.add(new VotingSession());
@@ -121,13 +123,13 @@ public class VotingSessionServiceTest {
 	}
 
 	@Test
-	public void shouldReturnZeroVotings() {
+	public void shouldReturnZeroVotingSessions() {
 		List<VotingSessionResponseDto> resp = votingSessionService.findAll();
 		assertEquals(0, resp.size());
 	}
 
 	@Test
-	public void shouldReturnOneVoting() {
+	public void shouldReturnOneVotingSession() {
 		ObjectId id = new ObjectId();
 		VotingSession votingSession = new VotingSession();
 		votingSession.setId(id);
@@ -147,9 +149,9 @@ public class VotingSessionServiceTest {
 	}
 
 	@Test(expected = BusinessException.class)
-	public void shouldThrowVotingExpired() {
+	public void shouldThrowVotingSessionExpired() {
 		ObjectId id = new ObjectId();
-		Agenda agenda = new Agenda("Agenda test - Should throw voting expired");
+		Agenda agenda = new Agenda("Agenda test - Should throw voting session expired");
 		VotingSession votingSession = new VotingSession(agenda, 1);
 
 		votingSession.setId(id);
@@ -162,4 +164,24 @@ public class VotingSessionServiceTest {
 		dto.setAnswer(Answer.NO);
 		votingSessionService.addVote(votingSession.getId().toHexString(), dto);
 	}
+	
+	@Test
+    public void shouldReturnVotingSessionResult(){
+        ObjectId id = new ObjectId();
+        Agenda agenda = new Agenda("Agenda test - Should return voting session result");
+        agenda.setId(id);
+
+        VotingSession votingSession = new VotingSession(agenda, 1);
+        votingSession.addVote(new Vote("1", Answer.NO));
+        votingSession.addVote(new Vote("2", Answer.NO));
+        votingSession.addVote(new Vote("3", Answer.YES));
+        votingSession.setExpirationDate(Instant.now().minusSeconds(10));
+
+        Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
+
+        VotingSessionResultResponseDto resp = votingSessionService.getVotingSessionResult(id.toHexString());
+
+        assertEquals(2, resp.getVoteCount().getNo());
+        assertEquals(1, resp.getVoteCount().getYes());
+    }
 }

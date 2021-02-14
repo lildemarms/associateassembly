@@ -18,10 +18,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.dto.VoteRequestDto;
 import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
+import com.avenue.associateassembly.dto.VotingSessionResultResponseDto;
+import com.avenue.associateassembly.entity.VoteCount;
 import com.avenue.associateassembly.service.VotingSessionService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,7 +37,7 @@ public class VotingSessionControllerTest {
 	public VotingSessionController votingSessionController;
 
 	@Test
-	public void shouldCreateVoting() throws URISyntaxException {
+	public void shouldCreateVotingSession() throws URISyntaxException {
 		VotingSessionRequestDto request = new VotingSessionRequestDto();
 		VotingSessionResponseDto response = new VotingSessionResponseDto();
 
@@ -48,7 +51,7 @@ public class VotingSessionControllerTest {
 	}
 
 	@Test
-	public void shouldReturnZeroVotings() {
+	public void shouldReturnZeroVotingSession() {
 		ResponseEntity<List<VotingSessionResponseDto>> resp = votingSessionController.listAll();
 
 		assertEquals(resp.getStatusCode(), HttpStatus.OK);
@@ -56,7 +59,7 @@ public class VotingSessionControllerTest {
 	}
 
 	@Test
-	public void shouldReturnVotings() {
+	public void shouldReturnVotingSessions() {
 		List<VotingSessionResponseDto> listDto = new ArrayList<>();
 		VotingSessionResponseDto voting = new VotingSessionResponseDto();
 		listDto.add(voting);
@@ -79,6 +82,20 @@ public class VotingSessionControllerTest {
 
 		ResponseEntity<VoteResponseDto> responseEntity = votingSessionController.vote(votingSessionId, request);
 		assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
+		assertNotNull(responseEntity.getBody());
+	}
+
+	@Test
+	public void shouldGetVotingSessionResult() {
+		String id = new ObjectId().toHexString();
+		VotingSessionResultResponseDto response = new VotingSessionResultResponseDto();
+		response.setAgenda(new AgendaResponseDto(id, "test"));
+		response.setVoteCount(new VoteCount(1L, 2L));
+
+		Mockito.when(votingSessionService.getVotingSessionResult(id)).thenReturn(response);
+
+		ResponseEntity<?> responseEntity = votingSessionController.getVotingResult(id);
+		assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
 		assertNotNull(responseEntity.getBody());
 	}
 }

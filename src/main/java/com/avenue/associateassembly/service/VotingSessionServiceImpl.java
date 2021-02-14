@@ -10,12 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.dto.VoteRequestDto;
 import com.avenue.associateassembly.dto.VoteResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionRequestDto;
 import com.avenue.associateassembly.dto.VotingSessionResponseDto;
+import com.avenue.associateassembly.dto.VotingSessionResultResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
+import com.avenue.associateassembly.entity.Answer;
 import com.avenue.associateassembly.entity.Vote;
+import com.avenue.associateassembly.entity.VoteCount;
 import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.CPFAlreadyVotedException;
 import com.avenue.associateassembly.exception.NotFoundException;
@@ -100,6 +104,25 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 		VoteResponseDto response = new VoteResponseDto();
 		response.setSuccess(true);
 		return response;
+	}
+
+	@Override
+	public VotingSessionResultResponseDto getVotingSessionResult(String votingSessionId) {
+		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
+				.orElseThrow(() -> new NotFoundException("Voting session not found."));
+		
+		List<Vote> votes = votingSession.getVotes();
+		
+		VoteCount voteCount = new VoteCount(
+                votes.stream().filter(vote -> vote.getAnswer().equals(Answer.YES)).count(),
+                votes.stream().filter(vote -> vote.getAnswer().equals(Answer.NO)).count()
+        );
+		
+		VotingSessionResultResponseDto resultResponseDto = new VotingSessionResultResponseDto();
+        resultResponseDto.setAgenda(modelMapper.map(votingSession.getAgenda(), AgendaResponseDto.class));
+        resultResponseDto.setVoteCount(voteCount);
+
+        return resultResponseDto;
 	}
 
 }
