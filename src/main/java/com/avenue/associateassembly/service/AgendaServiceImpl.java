@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.avenue.associateassembly.dto.AgendaRequestDto;
 import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
-import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.AgendaNotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 
 @Service
@@ -37,7 +37,7 @@ public class AgendaServiceImpl implements AgendaService {
 	@Override
 	public AgendaResponseDto findById(String id) {
 		Agenda agenda = this.agendaRepository.findById(new ObjectId(id)).
-                orElseThrow(() -> new NotFoundException("Agenda not found."));
+                orElseThrow(() -> new AgendaNotFoundException());
 
         return modelMapper.map(agenda, AgendaResponseDto.class);
 	}

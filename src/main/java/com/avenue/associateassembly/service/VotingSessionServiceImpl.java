@@ -21,10 +21,13 @@ import com.avenue.associateassembly.entity.Answer;
 import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VoteCount;
 import com.avenue.associateassembly.entity.VotingSession;
+import com.avenue.associateassembly.exception.AgendaNotFoundException;
 import com.avenue.associateassembly.exception.CPFAlreadyVotedException;
-import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.CPFUnableVoteException;
 import com.avenue.associateassembly.exception.VotingSessionBlockedReadingResultsException;
 import com.avenue.associateassembly.exception.VotingSessionExpiredException;
+import com.avenue.associateassembly.exception.VotingSessionNotFoundException;
+import com.avenue.associateassembly.integration.CpfService;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
 
@@ -37,21 +40,23 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	private final AgendaRepository agendaRepository;
 	private final ModelMapper modelMapper;
 	private final Environment environment;
+	private final CpfService cpfService;
 
 	@Autowired
 	public VotingSessionServiceImpl(VotingSessionRepository votingSessionRepository, ModelMapper modelMapper,
-			AgendaRepository agendaRepository, Environment environment) {
+			AgendaRepository agendaRepository, Environment environment, CpfService cpfService) {
 
 		this.votingSessionRepository = votingSessionRepository;
 		this.agendaRepository = agendaRepository;
 		this.modelMapper = modelMapper;
 		this.environment = environment;
+		this.cpfService = cpfService;
 	}
 
 	@Override
 	public VotingSessionResponseDto create(VotingSessionRequestDto dto) {
 		Agenda agenda = this.agendaRepository.findById(new ObjectId(dto.getAgendaId()))
-				.orElseThrow(() -> new NotFoundException("Agenda not found."));
+				.orElseThrow(() -> new AgendaNotFoundException());
 		
 		dto.setMinutesToExpiration(getMinutesToExpiration(dto));
 
@@ -78,7 +83,7 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	@Override
 	public VotingSessionResponseDto findById(String id) {
 		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(id))
-				.orElseThrow(() -> new NotFoundException("Voting not found."));
+				.orElseThrow(() -> new VotingSessionNotFoundException());
 
 		return modelMapper.map(votingSession, VotingSessionResponseDto.class);
 	}
@@ -93,10 +98,12 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 
 	@Override
 	public VoteResponseDto addVote(String votingSessionId, VoteRequestDto dto) {
+		if (cpfService.isAbleToVote(dto.getCpf())) {
+            throw new CPFUnableVoteException();
+		}
+		
 		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
-				.orElseThrow(() -> new NotFoundException("Voting session not found."));
-
-		// TODO: validar se cpf pode votar
+				.orElseThrow(() -> new VotingSessionNotFoundException());
 		
 		if (votingSession.isExpired()) {
 			throw new VotingSessionExpiredException();
@@ -118,7 +125,7 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	@Override
 	public VotingSessionResultResponseDto getVotingSessionResult(String votingSessionId) {
 		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
-				.orElseThrow(() -> new NotFoundException("Voting session not found."));
+				.orElseThrow(() -> new VotingSessionNotFoundException());
 
 		if (!votingSession.isExpired()) {
             throw new VotingSessionBlockedReadingResultsException(votingSession.getExpirationDate());

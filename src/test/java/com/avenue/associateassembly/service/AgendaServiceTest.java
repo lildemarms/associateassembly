@@ -18,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.avenue.associateassembly.dto.AgendaRequestDto;
 import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
-import com.avenue.associateassembly.exception.NotFoundException;
+import com.avenue.associateassembly.exception.AgendaNotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -74,10 +74,10 @@ public class AgendaServiceTest {
         assertEquals(agenda.getName(), response.getName());
     }
 	
-	@Test(expected = NotFoundException.class)
+	@Test(expected = AgendaNotFoundException.class)
     public void shouldThrowNotFoundException(){
         ObjectId id = new ObjectId();
-        Mockito.when(agendaRepository.findById(id)).thenThrow(new NotFoundException("Agenda not found."));
+        Mockito.when(agendaRepository.findById(id)).thenThrow(new AgendaNotFoundException());
 
         agendaService.findById(id.toHexString());
     }

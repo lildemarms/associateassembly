@@ -30,6 +30,7 @@ import com.avenue.associateassembly.entity.VotingSession;
 import com.avenue.associateassembly.exception.BusinessException;
 import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.exception.VotingSessionBlockedReadingResultsException;
+import com.avenue.associateassembly.exception.VotingSessionNotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
 
@@ -141,10 +142,10 @@ public class VotingSessionServiceTest {
 		assertEquals(id.toHexString(), resp.getId());
 	}
 
-	@Test(expected = NotFoundException.class)
+	@Test(expected = VotingSessionNotFoundException.class)
 	public void shouldThrowNotFoundException() {
 		ObjectId id = new ObjectId();
-		Mockito.when(votingSessionRepository.findById(id)).thenThrow(new NotFoundException("Voting not found."));
+		Mockito.when(votingSessionRepository.findById(id)).thenThrow(new VotingSessionNotFoundException());
 
 		votingSessionService.findById(id.toHexString());
 	}
