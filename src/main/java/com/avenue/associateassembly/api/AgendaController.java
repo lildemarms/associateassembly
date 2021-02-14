@@ -37,9 +37,7 @@ public class AgendaController {
     }
 
     @ApiOperation(value="Create one agenda", response = AgendaResponseDto.class)
-    @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Agenda successfully created.")
-    })
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Agenda successfully created.")})
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping()
     public ResponseEntity<AgendaResponseDto> create(@RequestBody AgendaRequestDto agenda) throws URISyntaxException {
@@ -48,12 +46,14 @@ public class AgendaController {
     }
     
     @ApiOperation(value="Get one agenda by id", response = AgendaResponseDto.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Agenda found.")})
     @GetMapping("/{id}")
     public ResponseEntity<AgendaResponseDto> findById(@PathVariable String id){
         return ResponseEntity.ok(this.agendaService.findById(id));
     }
     
     @ApiOperation(value="List all agendas", response = AgendaResponseDto.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Agendas found.")})
     @GetMapping()
     public ResponseEntity<List<AgendaResponseDto>> listAll(){
         return ResponseEntity.ok(this.agendaService.findAll());

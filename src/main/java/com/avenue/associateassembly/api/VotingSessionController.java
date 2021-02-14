@@ -40,6 +40,7 @@ public class VotingSessionController {
 	}
 
 	@ApiOperation(value = "Create one voting session", response = VotingSessionResponseDto.class)
+	@ApiResponses(value = {@ApiResponse(code = 201, message = "Voting successfully created.")})
 	@ResponseStatus(HttpStatus.CREATED)
 	@PostMapping()
 	public ResponseEntity<VotingSessionResponseDto> create(@RequestBody VotingSessionRequestDto votingSession)
@@ -63,6 +64,7 @@ public class VotingSessionController {
 	}
 	
 	@ApiOperation(value="Add a vote in a voting session", response = VoteResponseDto.class)
+	@ApiResponses(value = {@ApiResponse(code = 201, message = "Vote successfully added.")})
     @PutMapping("/{votingSessionId}/vote")
     public ResponseEntity<VoteResponseDto> vote(@PathVariable String votingSessionId, @RequestBody VoteRequestDto vote) throws URISyntaxException{
         VoteResponseDto response = this.votingSessionService.addVote(votingSessionId, vote);
@@ -70,9 +72,7 @@ public class VotingSessionController {
     }
 	
 	@ApiOperation(value="Get the voting session result", response = VotingSessionResponseDto.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Voting session result found.")
-    })
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Voting session result found.")})
     @GetMapping("/{votingSessionId}/result")
     public ResponseEntity<?> getVotingResult(@PathVariable String votingSessionId){
         return ResponseEntity.ok(this.votingSessionService.getVotingSessionResult(votingSessionId));
