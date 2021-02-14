@@ -2,6 +2,8 @@ package com.avenue.associateassembly.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.avenue.associateassembly.dto.AgendaRequestDto;
 import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
+import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -47,8 +50,35 @@ public class AgendaServiceTest {
 
 		AgendaRequestDto request = new AgendaRequestDto();
 		request.setName(name);
-		AgendaResponseDto response = agendaService.createAgenda(request);
+		AgendaResponseDto response = agendaService.create(request);
 
 		assertEquals(id.toHexString(), response.getId());
 	}
+
+	@Test
+	public void shouldReturnZeroAgendas() {
+		List<AgendaResponseDto> resp = agendaService.findAll();
+		assertEquals(0, resp.size());
+	}
+	
+	@Test
+    public void shouldReturnOneAgenda() {
+        ObjectId id = new ObjectId();
+        Agenda agenda = new Agenda("Agenda test 1");
+        agenda.setId(id);
+
+        Mockito.when(agendaRepository.findById(id)).thenReturn(java.util.Optional.of(agenda));
+
+        AgendaResponseDto response = agendaService.findById(id.toHexString());
+        assertEquals(id.toHexString(), response.getId());
+        assertEquals(agenda.getName(), response.getName());
+    }
+	
+	@Test(expected = NotFoundException.class)
+    public void shouldThrowNotFoundException(){
+        ObjectId id = new ObjectId();
+        Mockito.when(agendaRepository.findById(id)).thenThrow(new NotFoundException("Agenda not found."));
+
+        agendaService.findById(id.toHexString());
+    }
 }

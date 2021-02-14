@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -33,11 +36,33 @@ public class AgendaControllerTest {
         String agendaName = "Agenda creation test";
         AgendaRequestDto request = new AgendaRequestDto(agendaName);
         AgendaResponseDto response = new AgendaResponseDto(new ObjectId().toHexString(), agendaName);
-        Mockito.when(agendaService.createAgenda(request)).thenReturn(response);
+        Mockito.when(agendaService.create(request)).thenReturn(response);
 
         ResponseEntity<AgendaResponseDto> responseEntity = agendaController.create(request);
 
         assertEquals(responseEntity.getStatusCode(), HttpStatus.CREATED);
         assertNotNull(responseEntity.getBody());
+    }
+
+    @Test
+    public void shouldReturnAgendas() {
+        List<AgendaResponseDto> listDto = new ArrayList<>();
+        listDto.add(new AgendaResponseDto("1","Agenda test 1"));
+        listDto.add(new AgendaResponseDto("2","Agenda test 2"));
+
+        Mockito.when(agendaService.findAll()).thenReturn(listDto);
+
+        ResponseEntity<?> resp = agendaController.findAll();
+
+        assertEquals(resp.getStatusCode(), HttpStatus.OK);
+        assertEquals(2, ((ArrayList<?>) resp.getBody()).size());
+    }
+    
+    @Test
+    public void shouldReturnZeroAgendas() {
+        ResponseEntity<List<AgendaResponseDto>> resp = agendaController.findAll();
+
+        assertEquals(resp.getStatusCode(), HttpStatus.OK);
+        assertEquals(0, ((LinkedList<?>) resp.getBody()).size());
     }
 }
