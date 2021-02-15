@@ -27,10 +27,11 @@ import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.entity.Answer;
 import com.avenue.associateassembly.entity.Vote;
 import com.avenue.associateassembly.entity.VotingSession;
-import com.avenue.associateassembly.exception.BusinessException;
 import com.avenue.associateassembly.exception.NotFoundException;
 import com.avenue.associateassembly.exception.VotingSessionBlockedReadingResultsException;
+import com.avenue.associateassembly.exception.VotingSessionExpiredException;
 import com.avenue.associateassembly.exception.VotingSessionNotFoundException;
+import com.avenue.associateassembly.integration.CpfService;
 import com.avenue.associateassembly.repository.AgendaRepository;
 import com.avenue.associateassembly.repository.VotingSessionRepository;
 
@@ -42,6 +43,9 @@ public class VotingSessionServiceTest {
 
 	@Mock
 	public AgendaRepository agendaRepository;
+	
+	@Mock
+    public CpfService cpfService;
 
 	@Mock
 	public ModelMapper modelMapper;
@@ -150,7 +154,7 @@ public class VotingSessionServiceTest {
 		votingSessionService.findById(id.toHexString());
 	}
 
-	@Test(expected = BusinessException.class)
+	@Test(expected = VotingSessionExpiredException.class)
 	public void shouldThrowVotingSessionExpired() {
 		ObjectId id = new ObjectId();
 		Agenda agenda = new Agenda("Agenda test - Should throw voting session expired");
