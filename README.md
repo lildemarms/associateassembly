@@ -60,6 +60,8 @@ O Docker deve estar rodando na máquina.
 
 Clone o projeto e navegue até a pasta root do mesmo por um terminal.
 
+Ative o profile desejado no application.properties (dev ou prod).
+
 Então, execute os comandos na sequência abaixo para compilar, rodar os testes unitários da aplicação e gerar as imagens docker:
 
 - mvn clean
