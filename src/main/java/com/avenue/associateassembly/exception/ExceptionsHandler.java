@@ -19,4 +19,9 @@ public class ExceptionsHandler {
     protected ResponseEntity<Error> handleBusinessException(BusinessException ex){
         return new ResponseEntity<>(new Error(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
+    
+    @ExceptionHandler(value = IntegrationException.class)
+    protected ResponseEntity<Error> handleIntegrationException(IntegrationException ex){
+        return new ResponseEntity<>(new Error(ex.getMessage()), HttpStatus.NOT_FOUND);
+    }
 }

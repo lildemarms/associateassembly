@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,8 @@ import com.avenue.associateassembly.repository.AgendaRepository;
 
 @Service
 public class AgendaServiceImpl implements AgendaService {
+
+	Logger logger = LoggerFactory.getLogger(AgendaServiceImpl.class);
 
 	private final AgendaRepository agendaRepository;
 	private final ModelMapper modelMapper;
@@ -37,9 +41,14 @@ public class AgendaServiceImpl implements AgendaService {
 	@Override
 	public AgendaResponseDto findById(String id) {
 		Agenda agenda = this.agendaRepository.findById(new ObjectId(id)).
-                orElseThrow(() -> new AgendaNotFoundException());
+                orElseThrow(() -> agendaNotFound(id));
 
         return modelMapper.map(agenda, AgendaResponseDto.class);
+	}
+
+	private AgendaNotFoundException agendaNotFound(String agendaId) {
+		logger.info("Agenda (id: {}) not found.", agendaId);
+		return new AgendaNotFoundException();
 	}
 
 	@Override

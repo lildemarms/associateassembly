@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,8 @@ import com.avenue.associateassembly.repository.VotingSessionRepository;
 @Service
 public class VotingSessionServiceImpl implements VotingSessionService {
 
+	Logger logger = LoggerFactory.getLogger(VotingSessionServiceImpl.class);
+	
 	private static final String DEFAULT_EXPIRATION_MINUTES = "default.expiration.minutes";
 
 	private final VotingSessionRepository votingSessionRepository;
@@ -56,7 +60,7 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	@Override
 	public VotingSessionResponseDto create(VotingSessionRequestDto dto) {
 		Agenda agenda = this.agendaRepository.findById(new ObjectId(dto.getAgendaId()))
-				.orElseThrow(() -> new AgendaNotFoundException());
+				.orElseThrow(() -> agendaNotFound(dto));
 		
 		dto.setMinutesToExpiration(getMinutesToExpiration(dto));
 
@@ -64,6 +68,11 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 		votingSession = this.votingSessionRepository.insert(votingSession);
 
 		return modelMapper.map(votingSession, VotingSessionResponseDto.class);
+	}
+
+	private AgendaNotFoundException agendaNotFound(VotingSessionRequestDto dto) {
+		logger.info("Agenda (id: {}) not found.", dto.getAgendaId());
+		return new AgendaNotFoundException();
 	}
 	
 	private Integer getMinutesToExpiration(VotingSessionRequestDto dto) {
@@ -81,9 +90,8 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	}
 
 	@Override
-	public VotingSessionResponseDto findById(String id) {
-		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(id))
-				.orElseThrow(() -> new VotingSessionNotFoundException());
+	public VotingSessionResponseDto findById(String votingSessionId) {
+		VotingSession votingSession = findVotingSessionById(votingSessionId);
 
 		return modelMapper.map(votingSession, VotingSessionResponseDto.class);
 	}
@@ -99,17 +107,19 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 	@Override
 	public VoteResponseDto addVote(String votingSessionId, VoteRequestDto dto) {
 		if (!cpfService.isAbleToVote(dto.getCpf())) {
+			logger.info("CPF is unable to vote.");
             throw new CPFUnableVoteException();
 		}
 		
-		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
-				.orElseThrow(() -> new VotingSessionNotFoundException());
+		VotingSession votingSession = findVotingSessionById(votingSessionId);
 		
 		if (votingSession.isExpired()) {
+			logger.info("Voting already expired.");
 			throw new VotingSessionExpiredException();
 		}
 		
 		if (votingSession.cpfAlreadyVoted(dto.getCpf())) {
+			logger.info("Associated with CPF ({}) already voted.", dto.getCpf());
 			throw new CPFAlreadyVotedException(dto.getCpf());
 		}
 
@@ -124,10 +134,10 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 
 	@Override
 	public VotingSessionResultResponseDto getVotingSessionResult(String votingSessionId) {
-		VotingSession votingSession = this.votingSessionRepository.findById(new ObjectId(votingSessionId))
-				.orElseThrow(() -> new VotingSessionNotFoundException());
+		VotingSession votingSession = findVotingSessionById(votingSessionId);
 
 		if (!votingSession.isExpired()) {
+			logger.info("Voting session still open and blocked for reading the results. This session will end on {}", votingSession.getExpirationDate().toString());
             throw new VotingSessionBlockedReadingResultsException(votingSession.getExpirationDate());
 		}
 		
@@ -143,6 +153,16 @@ public class VotingSessionServiceImpl implements VotingSessionService {
         resultResponseDto.setVoteCount(voteCount);
 
         return resultResponseDto;
+	}
+
+	private VotingSession findVotingSessionById(String votingSessionId) {
+		return this.votingSessionRepository.findById(new ObjectId(votingSessionId))
+				.orElseThrow(() -> votingSessionNotFound(votingSessionId));
+	}
+
+	private VotingSessionNotFoundException votingSessionNotFound(String votingSessionId) {
+		logger.info("Voting session (id: {}) not found.", votingSessionId);
+		return new VotingSessionNotFoundException();
 	}
 
 }
