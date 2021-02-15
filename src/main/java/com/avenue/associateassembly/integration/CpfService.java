@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import com.avenue.associateassembly.dto.CpfIntegrationResponseDto;
 import com.avenue.associateassembly.exception.IntegrationAcessErrorException;
 import com.avenue.associateassembly.exception.InvalidCPFException;
 
@@ -29,10 +30,11 @@ public class CpfService {
 
 	public boolean isAbleToVote(String cpf) {
 		try {
-			String url = environment.getProperty(CPF_SERVICE_URL) + cpf;
-			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
-
-			return response.getBody().equals(ABLE_TO_VOTE);
+			String url = environment.getProperty(CPF_SERVICE_URL);
+			ResponseEntity<CpfIntegrationResponseDto> response = restTemplate.exchange(url, HttpMethod.GET, null, CpfIntegrationResponseDto.class, cpf);
+			
+			CpfIntegrationResponseDto dto = response.getBody();
+			return ABLE_TO_VOTE.equals(dto.getStatus());
 		} catch (HttpStatusCodeException ex) {
 			if (ex.getStatusCode() == HttpStatus.NOT_FOUND) {
 				throw new InvalidCPFException();

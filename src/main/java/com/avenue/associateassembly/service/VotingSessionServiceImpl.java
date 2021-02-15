@@ -98,7 +98,7 @@ public class VotingSessionServiceImpl implements VotingSessionService {
 
 	@Override
 	public VoteResponseDto addVote(String votingSessionId, VoteRequestDto dto) {
-		if (cpfService.isAbleToVote(dto.getCpf())) {
+		if (!cpfService.isAbleToVote(dto.getCpf())) {
             throw new CPFUnableVoteException();
 		}
 		
