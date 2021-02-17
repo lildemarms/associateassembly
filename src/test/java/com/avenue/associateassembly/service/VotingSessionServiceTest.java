@@ -18,10 +18,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.avenue.associateassembly.dto.VoteRequestDto;
-import com.avenue.associateassembly.dto.VoteResponseDto;
-import com.avenue.associateassembly.dto.VotingSessionRequestDto;
-import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionResultResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.entity.Answer;
@@ -60,35 +56,32 @@ public class VotingSessionServiceTest {
 
 	@Test
 	public void shouldCreateVotingSession() {
-		ObjectId id = new ObjectId();
-		Agenda agenda = new Agenda("Agenda test - Should create voting session");
+		ObjectId agendaId = new ObjectId();
+		ObjectId votingSessionId = new ObjectId();
+		Agenda agenda = new Agenda(agendaId, "Agenda 1");
 
 		VotingSession votingSession = new VotingSession(agenda, 10);
-		votingSession.setId(id);
+		votingSession.setId(votingSessionId);
 
-		Mockito.when(agendaRepository.findById(id)).thenReturn(java.util.Optional.of(agenda));
+		Mockito.when(agendaRepository.findById(agendaId)).thenReturn(java.util.Optional.of(agenda));
 		Mockito.when(votingSessionRepository.insert(new VotingSession(agenda, 10))).thenReturn(votingSession);
 
-		VotingSessionRequestDto request = new VotingSessionRequestDto();
-		request.setAgendaId(votingSession.getId().toHexString());
+		VotingSession request = new VotingSession();
+		request.setAgenda(new Agenda(agendaId, "Agenda 1"));
 		request.setMinutesToExpiration(10);
-		VotingSessionResponseDto response = votingSessionService.create(request);
+		VotingSession response = votingSessionService.create(request);
 
-		assertEquals(id.toHexString(), response.getId());
+		assertEquals(votingSessionId.toHexString(), response.getId().toHexString());
 	}
 
 	@Test(expected = NotFoundException.class)
 	public void shouldNotCreateVotingSessionWhenAgendaNotExists() {
-		ObjectId id = new ObjectId();
-		Agenda agenda = new Agenda("Agenda test - Should not create voting session when agenda not exists");
-
+		ObjectId agendaId = new ObjectId();
+		Agenda agenda = new Agenda(agendaId, "Agenda");
+		
 		VotingSession votingSession = new VotingSession(agenda, 10);
-		votingSession.setId(id);
-
-		VotingSessionRequestDto request = new VotingSessionRequestDto();
-		request.setAgendaId(votingSession.getId().toHexString());
-
-		votingSessionService.create(request);
+		
+		votingSessionService.create(votingSession);
 	}
 
 	@Test
@@ -99,42 +92,33 @@ public class VotingSessionServiceTest {
 
 		Mockito.when(votingSessionRepository.findAll()).thenReturn(votingSessions);
 
-		List<VotingSessionResponseDto> resp = votingSessionService.findAll();
-		assertEquals(2, resp.size());
+		List<VotingSession> response = votingSessionService.findAll();
+		assertEquals(2, response.size());
 	}
 
 	@Test
 	public void shouldVote() {
-		ObjectId id = new ObjectId();
+		ObjectId votingSessionId = new ObjectId();
 		String cpf = "99142889014";
-		Agenda agenda = new Agenda("Agenda test - Should vote");
 
-		VotingSession votingSession = new VotingSession(agenda, 10);
-		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
+		Agenda agenda = new Agenda(new ObjectId(), "Agenda");
+		VotingSession votingSession = new VotingSession(votingSessionId, agenda, 10);
+		
+		Mockito.when(votingSessionRepository.findById(votingSessionId)).thenReturn(java.util.Optional.of(votingSession));
 
-		VotingSession votingSession2 = new VotingSession(agenda, 10);
-		votingSession2.setId(id);
-
-		Vote vote = new Vote("99142889014", Answer.NO);
-		votingSession2.addVote(vote);
-
-		Mockito.when(votingSessionRepository.save(votingSession)).thenReturn(votingSession2);
-
-		VoteRequestDto dto = new VoteRequestDto();
-		dto.setCpf(cpf);
-		dto.setAnswer(Answer.NO);
+		Vote dto = new Vote(cpf, Answer.NO);
 
 		Mockito.when(cpfService.isAbleToVote(cpf)).thenReturn(true);
 		
-		VoteResponseDto voteResponse = votingSessionService.addVote(votingSession2.getId().toHexString(), dto);
+		boolean result = votingSessionService.addVote(votingSession.getId().toHexString(), dto);
 
-		assertTrue(voteResponse.isSuccess());
+		assertTrue(result);
 	}
 
 	@Test
 	public void shouldReturnZeroVotingSessions() {
-		List<VotingSessionResponseDto> resp = votingSessionService.findAll();
-		assertEquals(0, resp.size());
+		List<VotingSession> response = votingSessionService.findAll();
+		assertEquals(0, response.size());
 	}
 
 	@Test
@@ -145,8 +129,8 @@ public class VotingSessionServiceTest {
 
 		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
 
-		VotingSessionResponseDto resp = votingSessionService.findById(id.toHexString());
-		assertEquals(id.toHexString(), resp.getId());
+		VotingSession response = votingSessionService.findById(id.toHexString());
+		assertEquals(id.toHexString(), response.getId().toHexString());
 	}
 
 	@Test(expected = VotingSessionNotFoundException.class)
@@ -159,23 +143,20 @@ public class VotingSessionServiceTest {
 
 	@Test(expected = VotingSessionExpiredException.class)
 	public void shouldThrowVotingSessionExpired() {
-		ObjectId id = new ObjectId();
+		ObjectId votingSessionId = new ObjectId();
 		String cpf = "78773864005";
 
-		Agenda agenda = new Agenda("Agenda test - Should throw voting session expired");
-		VotingSession votingSession = new VotingSession(agenda, 1);
+		Agenda agenda = new Agenda(new ObjectId(), "Agenda");
 
-		votingSession.setId(id);
+		VotingSession votingSession = new VotingSession(agenda, 1);
+		votingSession.setId(votingSessionId);
 		votingSession.setExpirationDate(votingSession.getExpirationDate().minusSeconds(61));
 
-		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
-		
+		Mockito.when(votingSessionRepository.findById(votingSessionId)).thenReturn(java.util.Optional.of(votingSession));
 		Mockito.when(cpfService.isAbleToVote(cpf)).thenReturn(true);
 		
-		VoteRequestDto dto = new VoteRequestDto();
-		dto.setCpf(cpf);
-		dto.setAnswer(Answer.NO);
-		votingSessionService.addVote(votingSession.getId().toHexString(), dto);
+		Vote vote = new Vote(cpf, Answer.NO);
+		votingSessionService.addVote(votingSession.getId().toHexString(), vote);
 	}
 	
 	@Test
@@ -192,10 +173,10 @@ public class VotingSessionServiceTest {
 
         Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
 
-        VotingSessionResultResponseDto resp = votingSessionService.getVotingSessionResult(id.toHexString());
+        VotingSessionResultResponseDto response = votingSessionService.getVotingSessionResult(id.toHexString());
 
-        assertEquals(2, resp.getVoteCount().getNo());
-        assertEquals(1, resp.getVoteCount().getYes());
+        assertEquals(2, response.getVoteCount().getNo());
+        assertEquals(1, response.getVoteCount().getYes());
     }
 	
 	@Test(expected = VotingSessionBlockedReadingResultsException.class)

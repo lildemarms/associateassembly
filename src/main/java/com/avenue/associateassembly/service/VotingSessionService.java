@@ -2,21 +2,19 @@ package com.avenue.associateassembly.service;
 
 import java.util.List;
 
-import com.avenue.associateassembly.dto.VoteRequestDto;
-import com.avenue.associateassembly.dto.VoteResponseDto;
-import com.avenue.associateassembly.dto.VotingSessionRequestDto;
-import com.avenue.associateassembly.dto.VotingSessionResponseDto;
 import com.avenue.associateassembly.dto.VotingSessionResultResponseDto;
+import com.avenue.associateassembly.entity.Vote;
+import com.avenue.associateassembly.entity.VotingSession;
 
 public interface VotingSessionService {
 
-	VotingSessionResponseDto create(VotingSessionRequestDto dto);
+	VotingSession create(VotingSession dto);
 
-	VotingSessionResponseDto findById(String id);
+	VotingSession findById(String id);
 
-	List<VotingSessionResponseDto> findAll();
+	List<VotingSession> findAll();
 
-	VoteResponseDto addVote(String votingSessionId, VoteRequestDto dto);
+	boolean addVote(String votingSessionId, Vote dto);
 
 	VotingSessionResultResponseDto getVotingSessionResult(String votingSessionId);
 }

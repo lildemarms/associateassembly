@@ -29,11 +29,16 @@ public class VotingSession {
 		this.votes = new ArrayList<>();
 	}
 
-	public VotingSession(Agenda agenda, Integer minutesToExpiration) {
+	public VotingSession(ObjectId id, Agenda agenda, Integer minutesToExpiration) {
+		this.id = id;
 		this.agenda = agenda;
 		this.minutesToExpiration = minutesToExpiration;
 		this.expirationDate = Instant.now().plusSeconds(minutesToExpiration * 60);
 		this.votes = new ArrayList<>();
+	}
+	
+	public VotingSession(Agenda agenda, Integer minutesToExpiration) {
+		this(null, agenda, minutesToExpiration);
 	}
 
 	public ObjectId getId() {

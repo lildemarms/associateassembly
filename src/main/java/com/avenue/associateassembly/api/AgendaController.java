@@ -46,10 +46,10 @@ public class AgendaController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping()
     public ResponseEntity<AgendaResponseDto> create(@RequestBody AgendaRequestDto agendaDto) throws URISyntaxException {
-    	Agenda agenda = modelMapper.map(agendaDto, Agenda.class);
+    	Agenda agenda = convertFromRequestDtoToAgenda(agendaDto);
         Agenda agendaInDB = this.agendaService.create(agenda);
         
-        AgendaResponseDto response = modelMapper.map(agendaInDB, AgendaResponseDto.class);
+        AgendaResponseDto response = convertToResponseDto(agendaInDB);
         return ResponseEntity.created(new URI(response.getId())).body(response);
     }
     
@@ -58,7 +58,7 @@ public class AgendaController {
     @GetMapping("/{id}")
     public ResponseEntity<AgendaResponseDto> findById(@PathVariable String id){
     	Agenda agenda = this.agendaService.findById(id);
-        return ResponseEntity.ok(modelMapper.map(agenda, AgendaResponseDto.class));
+        return ResponseEntity.ok(convertToResponseDto(agenda));
     }
     
     @ApiOperation(value="List all agendas", response = AgendaResponseDto.class)
@@ -67,10 +67,18 @@ public class AgendaController {
     public ResponseEntity<List<AgendaResponseDto>> listAll(){
     	List<Agenda> agendas = this.agendaService.findAll();
     	
-    	List<AgendaResponseDto> response = agendas.stream().map(
-    		agenda -> modelMapper.map(agenda, AgendaResponseDto.class)
-    	).collect(Collectors.toList());
+    	List<AgendaResponseDto> response = agendas.stream()
+    			.map(this::convertToResponseDto)
+    			.collect(Collectors.toList());
     	
         return ResponseEntity.ok(response);
+    }
+    
+    private AgendaResponseDto convertToResponseDto(Agenda post) {
+    	return modelMapper.map(post, AgendaResponseDto.class);
+    }
+    
+    private Agenda convertFromRequestDtoToAgenda(AgendaRequestDto dto) {
+    	return modelMapper.map(dto, Agenda.class);
     }
 }
