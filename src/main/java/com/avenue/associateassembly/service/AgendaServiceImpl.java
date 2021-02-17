@@ -1,17 +1,13 @@
 package com.avenue.associateassembly.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.avenue.associateassembly.dto.AgendaRequestDto;
-import com.avenue.associateassembly.dto.AgendaResponseDto;
 import com.avenue.associateassembly.entity.Agenda;
 import com.avenue.associateassembly.exception.AgendaNotFoundException;
 import com.avenue.associateassembly.repository.AgendaRepository;
@@ -22,28 +18,21 @@ public class AgendaServiceImpl implements AgendaService {
 	Logger logger = LoggerFactory.getLogger(AgendaServiceImpl.class);
 
 	private final AgendaRepository agendaRepository;
-	private final ModelMapper modelMapper;
 
 	@Autowired
-	public AgendaServiceImpl(AgendaRepository agendaRepository, ModelMapper modelMapper) {
+	public AgendaServiceImpl(AgendaRepository agendaRepository) {
 		this.agendaRepository = agendaRepository;
-		this.modelMapper = modelMapper;
 	}
 
 	@Override
-	public AgendaResponseDto create(AgendaRequestDto dto) {
-		Agenda agenda = new Agenda(dto.getName());
-		agenda = agendaRepository.insert(agenda);
-
-		return modelMapper.map(agenda, AgendaResponseDto.class);
+	public Agenda create(Agenda agenda) {
+		return agendaRepository.insert(agenda);
 	}
 
 	@Override
-	public AgendaResponseDto findById(String id) {
-		Agenda agenda = this.agendaRepository.findById(new ObjectId(id)).
+	public Agenda findById(String id) {
+		return this.agendaRepository.findById(new ObjectId(id)).
                 orElseThrow(() -> agendaNotFound(id));
-
-        return modelMapper.map(agenda, AgendaResponseDto.class);
 	}
 
 	private AgendaNotFoundException agendaNotFound(String agendaId) {
@@ -52,12 +41,8 @@ public class AgendaServiceImpl implements AgendaService {
 	}
 
 	@Override
-	public List<AgendaResponseDto> findAll() {
-		List<Agenda> agendaList = this.agendaRepository.findAll();
-
-        return agendaList.stream().map(
-            agenda -> modelMapper.map(agenda, AgendaResponseDto.class)
-        ).collect(Collectors.toList());
+	public List<Agenda> findAll() {
+		return this.agendaRepository.findAll();
 	}
 
 }

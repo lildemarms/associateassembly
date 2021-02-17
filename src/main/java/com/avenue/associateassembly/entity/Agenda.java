@@ -14,8 +14,16 @@ public class Agenda {
 
     private String name;
 
-    public Agenda(String name) {
+    public Agenda() {
+    }
+    
+    public Agenda(ObjectId id, String name) {
+    	this.id = id;
         this.name = name;
+    }
+    
+    public Agenda(String name) {
+        this(null, name);
     }
 
     public ObjectId getId() {

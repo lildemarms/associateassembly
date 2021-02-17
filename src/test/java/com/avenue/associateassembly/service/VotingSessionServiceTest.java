@@ -106,6 +106,7 @@ public class VotingSessionServiceTest {
 	@Test
 	public void shouldVote() {
 		ObjectId id = new ObjectId();
+		String cpf = "99142889014";
 		Agenda agenda = new Agenda("Agenda test - Should vote");
 
 		VotingSession votingSession = new VotingSession(agenda, 10);
@@ -120,9 +121,11 @@ public class VotingSessionServiceTest {
 		Mockito.when(votingSessionRepository.save(votingSession)).thenReturn(votingSession2);
 
 		VoteRequestDto dto = new VoteRequestDto();
-		dto.setCpf("99142889014");
+		dto.setCpf(cpf);
 		dto.setAnswer(Answer.NO);
 
+		Mockito.when(cpfService.isAbleToVote(cpf)).thenReturn(true);
+		
 		VoteResponseDto voteResponse = votingSessionService.addVote(votingSession2.getId().toHexString(), dto);
 
 		assertTrue(voteResponse.isSuccess());
@@ -157,6 +160,8 @@ public class VotingSessionServiceTest {
 	@Test(expected = VotingSessionExpiredException.class)
 	public void shouldThrowVotingSessionExpired() {
 		ObjectId id = new ObjectId();
+		String cpf = "78773864005";
+
 		Agenda agenda = new Agenda("Agenda test - Should throw voting session expired");
 		VotingSession votingSession = new VotingSession(agenda, 1);
 
@@ -164,9 +169,11 @@ public class VotingSessionServiceTest {
 		votingSession.setExpirationDate(votingSession.getExpirationDate().minusSeconds(61));
 
 		Mockito.when(votingSessionRepository.findById(id)).thenReturn(java.util.Optional.of(votingSession));
-
+		
+		Mockito.when(cpfService.isAbleToVote(cpf)).thenReturn(true);
+		
 		VoteRequestDto dto = new VoteRequestDto();
-		dto.setCpf("78773864005");
+		dto.setCpf(cpf);
 		dto.setAnswer(Answer.NO);
 		votingSessionService.addVote(votingSession.getId().toHexString(), dto);
 	}

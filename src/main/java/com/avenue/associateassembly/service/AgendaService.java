@@ -2,14 +2,13 @@ package com.avenue.associateassembly.service;
 
 import java.util.List;
 
-import com.avenue.associateassembly.dto.AgendaRequestDto;
-import com.avenue.associateassembly.dto.AgendaResponseDto;
+import com.avenue.associateassembly.entity.Agenda;
 
 public interface AgendaService {
 
-	AgendaResponseDto create(AgendaRequestDto dto);
+	Agenda create(Agenda agenda);
 
-	AgendaResponseDto findById(String id);
+	Agenda findById(String id);
 	
-	List<AgendaResponseDto> findAll();
+	List<Agenda> findAll();
 }
